@@ -1,0 +1,25 @@
+#Creating entry in input file
+#1. On new line past youtube link
+#2. press tab
+#3. provide stating time
+#4. press tab
+#5. provide end time
+#start time and end time are optional
+#can provide only start time
+
+#Youtube link is required to download	optional	optional
+#Youtube link (can contain t param)	start time	end time
+#Youtube link (can contain t param)	hh:mm:ss	hh:mm:ss
+
+# example download complete video
+# from 0 sec till end
+https://www.youtube.com/watch?v=m2lKgOAHVPk
+
+# example with start time
+# start video from 1 min 8 sec till end
+https://www.youtube.com/watch?v=oolJWcOhHCw	00:01:08
+
+# example with start time and end time
+# starting from 5 second and ending on 1 min 23 sec
+https://www.youtube.com/watch?v=fIuh_fZfAtU	00:00:05	00:01:23
+https://youtu.be/mClF6mJV5xM?t=103	00:01:44	00:05:42
