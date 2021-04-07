@@ -8,7 +8,7 @@ if [ -z "$input" ]; then
   exit
 fi
 
-if [ ! -f "$scriptDir/$input" ] || [ ! -f "$input" ]; then
+if [ ! -f "$scriptDir/$input" ] && [ ! -f "$input" ]; then
   echo input file in config.properties is not a file
   exit
 fi
