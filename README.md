@@ -12,6 +12,9 @@ I wanted ad free videos in the form of playlist, which should available to me wi
 1. maintain order in download
 1. Using youtube-dl and ffmpeg
 1. created and tested on ubuntu
+1. install youtube-dl by script
+1. update youtube-dl every time script run
+1. install ffmpeg by script (ubuntu)
 
 ## Usage
 1. Clone repo
