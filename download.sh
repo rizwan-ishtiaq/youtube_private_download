@@ -3,6 +3,8 @@ set -e
 
 scriptDir=$(dirname "$(readlink -f "$0")")
 source $scriptDir/config.properties
+source $scriptDir/functions.sh
+
 if [ -z "$input" ]; then
   echo set input file in config.properties file
   exit
@@ -17,44 +19,7 @@ if [ -f "$scriptDir/$input" ]; then
   input="${scriptDir}/${input}"
 fi
 
-function install {
-  echo "installing youtube-del at /usr/local/bin/youtube-dl as sudo"
-  sudo wget https://yt-dl.org/downloads/latest/youtube-dl -O /usr/local/bin/youtube-dl &> /dev/null
-  sudo chmod a+rx /usr/local/bin/youtube-dl
-
-  echo "Importing youtube-dl public key into keyring"
-  wget https://dstftw.github.io/keys/18A9236D.asc -O youtube-dl.asc &> /dev/null
-  gpg2 --import youtube-dl.asc
-  rm -f youtube-dl.asc
-
-  
-  echo "Verifying installed youtube-dl signature"
-  wget https://yt-dl.org/downloads/latest/youtube-dl.sig -O youtube-dl.sig &> /dev/null
-  gpg --verify youtube-dl.sig /usr/local/bin/youtube-dl
-  rm -f youtube-dl.sig
-  
-  echo "Installed youtube-dl successfull"
-  echo "http://ytdl-org.github.io/youtube-dl/download.html"
-}
-
-if ! command -v youtube-dl &> /dev/null
-then
-  echo "youtube-dl could not be found"
-  install
-else
-  echo "Updating youtube-dl"
-  youtube-dl -U
-fi
-
-if ! command -v ffmpeg &> /dev/null
-then
-  echo "ffmpeg could not be found"
-  echo "Installing ffmpeg with snap as sudo"
-  sudo snap install ffmpeg
-else
-  echo "You might conside to update ffmpeg"
-  echo sudo snap refresh ffmpeg
-fi
+installOrUpdateRequiredSoftwares
 
 output=normal
 youtube=(youtube-dl --ignore-config -f best)
@@ -74,7 +39,7 @@ function downloadVideo {
   youtubeOptions=(--get-filename -o '%(title)s.%(ext)s' "${url}")
   name=$("${youtube[@]}" "${youtubeOptions[@]}" | tr -dc '[:alnum:] .' | tr -s ' ' | tr ' ' '-') #| tr '[:upper:]' '[:lower:]'
   fullName="$(printf "%03d" $index)-${name}"
-  cutFile=$(echo $fullName | sed 's/\.\([^.]*\)$/-trim.\1/')
+  cutFile=$(concatStringBeforeExt "$fullName" "-trim")
 
   #if you download file before and trimed it don't download again
   #if file is not trimed and downloaded before youtube-dl will not download it
@@ -86,10 +51,10 @@ function downloadVideo {
 
   #WARNING: Requested formats are incompatible for merge and will be merged into mkv.
   #youtube-dl will create mkv file
-  mkvFile=$(echo $fullName | rev | cut -d'.' -f2- | rev)".mkv"
+  mkvFile=$(getFileNameWithoutExt "$fullName")".mkv"
   if [ -f "$mkvFile" ]; then
     fullName="${mkvFile}"
-    cutFile=$(echo $fullName | sed 's/\.\([^.]*\)$/-trim.\1/')
+    cutFile=$(concatStringBeforeExt "$fullName" "-trim")
   fi
 
   #if already trimed then donot do it again
@@ -114,7 +79,7 @@ while IFS= read -r line <&3; do
     continue;
   fi
   index=$((index+1))
-  echo "downloading ${line}"
+  echo "${index} -> downloading ${line}"
   IFS=$'\t' read -ra ARR <<<"$line"
   # run it in a sub-shell
   downloadVideo "${ARR[0]}" "${ARR[1]}" "${ARR[2]}"
