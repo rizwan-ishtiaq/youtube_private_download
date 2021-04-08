@@ -40,10 +40,11 @@ function downloadVideo {
   name=$("${youtube[@]}" "${youtubeOptions[@]}" | tr -dc '[:alnum:] .' | tr -s ' ' | tr ' ' '-') #| tr '[:upper:]' '[:lower:]'
   fullName="$(printf "%03d" $index)-${name}"
   cutFile=$(concatStringBeforeExt "$fullName" "-trim")
+  cutFileMkv=$(getFileNameWithoutExt "$fullName")"-trim.mkv"
 
   #if you download file before and trimed it don't download again
   #if file is not trimed and downloaded before youtube-dl will not download it
-  if [ ! -f "$cutFile" ]; then  
+  if [ ! -f "$cutFile" ] && [ ! -f "$cutFileMkv" ]; then  
     youtubeOptions=(-o "${fullName}" "${url}")
     echo "${youtube[@]}" "${youtubeOptions[@]}"
     "${youtube[@]}" "${youtubeOptions[@]}"
@@ -52,9 +53,9 @@ function downloadVideo {
   #WARNING: Requested formats are incompatible for merge and will be merged into mkv.
   #youtube-dl will create mkv file
   mkvFile=$(getFileNameWithoutExt "$fullName")".mkv"
-  if [ -f "$mkvFile" ]; then
+  if [ -f "$mkvFile" ] || [ -f "$cutFileMkv" ]; then
     fullName="${mkvFile}"
-    cutFile=$(concatStringBeforeExt "$fullName" "-trim")
+    cutFile="${cutFileMkv}"
   fi
 
   #if already trimed then donot do it again
