@@ -37,7 +37,8 @@ function downloadVideo {
   startTime="$2"
   endTime="$3"
   youtubeOptions=(--get-filename -o '%(title)s.%(ext)s' "${url}")
-  name=$("${youtube[@]}" "${youtubeOptions[@]}" | tr -dc '[:alnum:] .' | tr -s ' ' | tr ' ' '-') #| tr '[:upper:]' '[:lower:]'
+  name=$("${youtube[@]}" "${youtubeOptions[@]}") 
+  name=$(linuxFriendlyFileName "${name}")
   fullName="$(printf "%03d" $index)-${name}"
   cutFile=$(concatStringBeforeExt "$fullName" "-trim")
   cutFileMkv=$(getFileNameWithoutExt "$fullName")"-trim.mkv"

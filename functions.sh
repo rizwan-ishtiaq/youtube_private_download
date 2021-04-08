@@ -1,3 +1,8 @@
+function linuxFriendlyFileName {
+  fileNameContainingExt="$1"
+  echo $fileNameContainingExt | tr -dc '[:alnum:] .' | tr -s ' ' | tr ' ' '-' # | tr '[:upper:]' '[:lower:]'
+}
+
 function getFileNameWithoutExt {
   fileNameContainingExt="$1"
   echo $fileNameContainingExt | rev | cut -d'.' -f2- | rev
