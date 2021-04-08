@@ -57,10 +57,10 @@ else
 fi
 
 output=normal
-youtube="youtube-dl --ignore-config -f best "
+youtube=(youtube-dl --ignore-config -f best)
 if [[ $quality == "best" ]]; then
   output=best
-  youtube="youtube-dl --ignore-config -f bestvideo+bestaudio/best "
+  youtube=(youtube-dl --ignore-config -f bestvideo+bestaudio/best)
 fi
 echo "Creating or checking output directory"
 mkdir -p $scriptDir/$output
@@ -71,32 +71,43 @@ function downloadVideo {
   url="$1"
   startTime="$2"
   endTime="$3"
-  name=$($youtube --get-filename -o '%(title)s.%(ext)s' ${url} | tr -dc '[:alnum:] .' | tr -s ' ' | tr ' ' '-') #| tr '[:upper:]' '[:lower:]'
+  youtubeOptions=(--get-filename -o '%(title)s.%(ext)s' "${url}")
+  name=$("${youtube[@]}" "${youtubeOptions[@]}" | tr -dc '[:alnum:] .' | tr -s ' ' | tr ' ' '-') #| tr '[:upper:]' '[:lower:]'
   fullName="$(printf "%03d" $index)-${name}"
   cutFile=$(echo $fullName | sed 's/\.\([^.]*\)$/-trim.\1/')
 
   #if you download file before and trimed it don't download again
   #if file is not trimed and downloaded before youtube-dl will not download it
   if [ ! -f "$cutFile" ]; then  
-    $youtube -o "${fullName}" $url
+    youtubeOptions=(-o "${fullName}" "${url}")
+    echo "${youtube[@]}" "${youtubeOptions[@]}"
+    "${youtube[@]}" "${youtubeOptions[@]}"
+  fi
+
+  #WARNING: Requested formats are incompatible for merge and will be merged into mkv.
+  #youtube-dl will create mkv file
+  mkvFile=$(echo $fullName | rev | cut -d'.' -f2- | rev)".mkv"
+  if [ -f "$mkvFile" ]; then
+    fullName="${mkvFile}"
+    cutFile=$(echo $fullName | sed 's/\.\([^.]*\)$/-trim.\1/')
   fi
 
   #if already trimed then donot do it again
   if [ -n "$startTime" ] && [ ! -f "$cutFile" ]; then
-    echo Starting to trim video
-    tool="ffmpeg -i ${fullName} -ss ${startTime} -c copy ${cutFile}"
+    echo triming video
+    tool=(ffmpeg -i ${fullName} -ss ${startTime} -c copy ${cutFile})
     if [ -n "$endTime" ]; then
-      tool="ffmpeg -i ${fullName} -ss ${startTime} -to ${endTime} -c copy ${cutFile}"
+      tool=(ffmpeg -i ${fullName} -ss ${startTime} -to ${endTime} -c copy ${cutFile})
     fi
-    $tool &> /dev/null
+    "${tool[@]}" &> /dev/null
     rm -f "${fullName}"
   fi
 }
 
 date
 echo "Reading input.tsv tab seperated values file"
-while IFS= read -r line
-do
+echo "using file descriptor 3 to avoid conflicts"
+while IFS= read -r line <&3; do
   echo "line ${line}"
   # ignore lines starting with #
   if [[ $line =~ ^\#.*$ ]] || [[ ${#line} == 0 ]] ; then
@@ -106,8 +117,9 @@ do
   echo "downloading ${line}"
   IFS=$'\t' read -ra ARR <<<"$line"
   # run it in a sub-shell
-  (downloadVideo "${ARR[0]}" "${ARR[1]}" "${ARR[2]}")
-done < "$input"
+  downloadVideo "${ARR[0]}" "${ARR[1]}" "${ARR[2]}"
+  IFS=
+done 3<"$input"
 date
 
 #youtube-dl params help
