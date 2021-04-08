@@ -73,17 +73,19 @@ date
 echo "Reading input.tsv tab seperated values file"
 echo "using file descriptor 3 to avoid conflicts"
 while IFS= read -r line <&3; do
-  echo "line ${line}"
   # ignore lines starting with #
   if [[ $line =~ ^\#.*$ ]] || [[ ${#line} == 0 ]] ; then
+    echo "ignoring ${line}"
     continue;
   fi
+
   index=$((index+1))
   echo "${index} -> downloading ${line}"
   IFS=$'\t' read -ra ARR <<<"$line"
   # run it in a sub-shell
   downloadVideo "${ARR[0]}" "${ARR[1]}" "${ARR[2]}"
   IFS=
+  printf "\n"
 done 3<"$input"
 date
 

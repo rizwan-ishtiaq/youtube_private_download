@@ -63,4 +63,5 @@ function installOrUpdateFfmpeg {
 function installOrUpdateRequiredSoftwares {
   installOrUpdateYoutubeDl
   installOrUpdateFfmpeg
+  printf "\n\n"
 }
