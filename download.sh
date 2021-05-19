@@ -6,12 +6,12 @@ source $scriptDir/config.properties
 source $scriptDir/functions.sh
 
 if [ -z "$input" ]; then
-  echo set input file in config.properties file
+  ERR set input file in config.properties file
   exit
 fi
 
 if [ ! -f "$scriptDir/$input" ] && [ ! -f "$input" ]; then
-  echo input file in config.properties is not a file
+  ERR input file in config.properties is not a file
   exit
 fi
 
@@ -27,7 +27,7 @@ if [[ $quality == "best" ]]; then
   output=best
   youtube=(youtube-dl --ignore-config -f bestvideo+bestaudio/best)
 fi
-echo "Creating or checking output directory"
+TRACE "Creating or checking output directory"
 mkdir -p $scriptDir/$output
 cd $scriptDir/$output
 
@@ -47,7 +47,7 @@ function downloadVideo {
   #if file is not trimed and downloaded before youtube-dl will not download it
   if [ ! -f "$cutFile" ] && [ ! -f "$cutFileMkv" ]; then  
     youtubeOptions=(-o "${fullName}" "${url}")
-    echo "${youtube[@]}" "${youtubeOptions[@]}"
+    TRACE "${youtube[@]}" "${youtubeOptions[@]}"
     "${youtube[@]}" "${youtubeOptions[@]}"
   fi
 
@@ -61,7 +61,7 @@ function downloadVideo {
 
   #if already trimed then donot do it again
   if [ -n "$startTime" ] && [ ! -f "$cutFile" ]; then
-    echo triming video
+    INFO triming video
     tool=(ffmpeg -i ${fullName} -ss ${startTime} -c copy ${cutFile})
     if [ -n "$endTime" ]; then
       tool=(ffmpeg -i ${fullName} -ss ${startTime} -to ${endTime} -c copy ${cutFile})
@@ -71,25 +71,24 @@ function downloadVideo {
   fi
 }
 
-date
-echo "Reading input.tsv tab seperated values file"
-echo "using file descriptor 3 to avoid conflicts"
+INFO "Reading input.tsv tab seperated values file"
+TRACE "using file descriptor 3 to avoid conflicts"
 while IFS= read -r line <&3; do
   # ignore lines starting with #
   if [[ $line =~ ^\#.*$ ]] || [[ ${#line} == 0 ]] ; then
-    echo "ignoring ${line}"
+    TRACE "ignoring ${line}"
     continue;
   fi
 
   index=$((index+1))
-  echo "${index} -> downloading ${line}"
+  INFO "${index} -> downloading ${line}"
   IFS=$'\t' read -ra ARR <<<"$line"
   # run it in a sub-shell
   downloadVideo "${ARR[0]}" "${ARR[1]}" "${ARR[2]}"
   IFS=
   printf "\n"
 done 3<"$input"
-date
+INFO programs terminates successfully
 
 #youtube-dl params help
 #https://github.com/ytdl-org/youtube-dl/blob/master/README.md

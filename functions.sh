@@ -70,3 +70,21 @@ function installOrUpdateRequiredSoftwares {
   installOrUpdateFfmpeg
   printf "\n\n"
 }
+
+function ERR {
+  echo "$(date) ERROR: $*"
+}
+
+function INFO {
+  echo "$(date) INFO: $*"
+}
+
+function WARN {
+  echo "$(date) WARNING: $*"
+}
+
+function TRACE {
+  if [[ "$trace" == "on" ]]; then
+    echo "$(date) DEBUG: $*"
+  fi
+}
