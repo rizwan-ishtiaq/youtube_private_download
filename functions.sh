@@ -72,19 +72,23 @@ function installOrUpdateRequiredSoftwares {
 }
 
 function ERR {
-  echo "$(date) ERROR: $*"
+  echo -n "$(date) ERROR: "
+  cat <<< "$@"
 }
 
 function INFO {
-  echo "$(date) INFO: $*"
+  echo -n "$(date) INFO: "
+  cat <<< "$@"
 }
 
 function WARN {
-  echo "$(date) WARNING: $*"
+  echo -n "$(date) WARNING: "
+  cat <<< "$@"
 }
 
 function TRACE {
   if [[ "$trace" == "on" ]]; then
-    echo "$(date) DEBUG: $*"
+    echo -n "$(date) DEBUG: "
+    cat <<< "$@"
   fi
 }

@@ -26,19 +26,28 @@ youtube=(youtube-dl --ignore-config -f best)
 if [[ $quality == "best" ]]; then
   output=best
   youtube=(youtube-dl --ignore-config -f bestvideo+bestaudio/best)
+elif [[ $quality == "mobile" ]]; then
+  output=mobile
+  youtube=(youtube-dl --ignore-config -f worst[ext=mp4])
 fi
 TRACE "Creating or checking output directory"
 mkdir -p $scriptDir/$output
 cd $scriptDir/$output
 
 index=0
+function getYoutubeVideoName {
+  url="$1"
+  youtubeOptions=(--get-filename -o '%(title)s.%(ext)s' "${url}")
+  name=$("${youtube[@]}" "${youtubeOptions[@]}")
+  name=$(linuxFriendlyFileName "${name}")
+  echo "$name"
+}
+
 function downloadVideo {
   url="$1"
   startTime="$2"
   endTime="$3"
-  youtubeOptions=(--get-filename -o '%(title)s.%(ext)s' "${url}")
-  name=$("${youtube[@]}" "${youtubeOptions[@]}") 
-  name=$(linuxFriendlyFileName "${name}")
+  name=$(getYoutubeVideoName "${url}")
   fullName="$(printf "%03d" $index)-${name}"
   cutFile=$(concatStringBeforeExt "$fullName" "-trim")
   cutFileMkv=$(getFileNameWithoutExt "$fullName")"-trim.mkv"
@@ -71,11 +80,24 @@ function downloadVideo {
   fi
 }
 
+function incrementIndexWhenLineIsCommentedAndVideoAlreadyDownloaded {
+  commentedLine=$(echo "${1//#}" | xargs )
+  if [[ $commentedLine =~ "youtu" ]] && [[ $commentedLine =~ "http" ]]; then
+    IFS=$'\t' read -ra ARR <<<"$commentedLine"
+    fileName=$(getYoutubeVideoName "${ARR[0]}")
+    fileName=$(getFileNameWithoutExt "$fileName")
+    if [[ $(find . -maxdepth 1 -name "*$fileName*" | wc -l) -gt 0 ]]; then
+      index=$((index+1))
+    fi
+  fi
+}
+
 INFO "Reading input.tsv tab seperated values file"
 TRACE "using file descriptor 3 to avoid conflicts"
 while IFS= read -r line <&3; do
   # ignore lines starting with #
   if [[ $line =~ ^\#.*$ ]] || [[ ${#line} == 0 ]] ; then
+    incrementIndexWhenLineIsCommentedAndVideoAlreadyDownloaded "$line"
     TRACE "ignoring ${line}"
     continue;
   fi
